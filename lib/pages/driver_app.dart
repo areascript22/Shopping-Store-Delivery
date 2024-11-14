@@ -120,11 +120,13 @@ class _DriverAppState extends State<DriverApp> with TickerProviderStateMixin {
     //GEt polylines from Current location to B
     late LatLng currentLocation;
     if (provider.currentLocation == null) {
+      logger.f('phase 3.5');
       currentLocation = await mapPageController.getCurrentLocation();
+      logger.f('phase 3.7 Current Location: $currentLocation');
     } else {
       currentLocation = provider.currentLocation!;
     }
-    logger.f('phase 4');
+    logger.f('phase 4 Current Location: $currentLocation');
 
     RouteInfo? routeFromCurrentA = await driverAppController.getRoutePoints(
       currentLocation,
@@ -133,7 +135,7 @@ class _DriverAppState extends State<DriverApp> with TickerProviderStateMixin {
     logger.f('phase 5');
     provider.fromCurrentToPickUp = Polyline(
       // polylineId: PolylineId(provider.request!.destinationLocation.toString()),
-      polylineId: PolylineId('Destination location'),
+      polylineId: PolylineId('Destination'),
       points: routeFromCurrentA != null ? routeFromCurrentA.polylinePoints : [],
       width: 5,
       color: Colors.green,

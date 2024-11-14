@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_taxi_driver/components/loading_overlay.dart';
@@ -15,8 +17,10 @@ import 'package:logger/logger.dart';
 import 'package:map_launcher/map_launcher.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 
 class MapPageController {
+  final String apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
   VoidCallback? updateUi;
   final Logger logger = Logger();
   final ClientRequestPageController clientRequestPageController =
@@ -310,8 +314,7 @@ class MapPageController {
                     provider.currentLocation!,
                     provider.request!.pickUpCoordinates);
             provider.fromCurrentToPickUp = Polyline(
-              polylineId:
-                 const  PolylineId('Destination location'),
+              polylineId: const PolylineId('Destination location'),
               points:
                   pointsCurrentA != null ? pointsCurrentA.polylinePoints : [],
               width: 5,
@@ -326,8 +329,7 @@ class MapPageController {
                 provider.currentLocation!,
                 provider.request!.destinationCoordinates);
             provider.fromPickUpToDropOff = Polyline(
-              polylineId:
-                  const PolylineId('pick up location'),
+              polylineId: const PolylineId('pick up location'),
               points: pointsAB != null ? pointsAB.polylinePoints : [],
               width: 5,
               color: Colors.blue,
@@ -340,6 +342,66 @@ class MapPageController {
     });
 
     logger.f("location fetched");
+  }
+
+//Update and return location as string when map is moved by finger's user
+//Geocoding
+  Future<String?> convertCoordsIntoLocation(LatLng location) async {
+    String url =
+        "https://maps.googleapis.com/maps/api/geocode/json?latlng=${location.latitude},${location.longitude}&key=$apiKey";
+    try {
+      final response = await http.get(Uri.parse(url));
+      final decoded = json.decode(response.body);
+      List<dynamic> results = decoded["results"];
+      for (var element in results) {
+        //Return direction one or directiono two
+        String direction1 = element["address_components"][0]["long_name"];
+        String direction2 = element["address_components"][1]["long_name"];
+
+        if (!_isNumber(direction1) &&
+            direction1.length > 3 &&
+            !_tieneSignoMasEnMedio(direction1) &&
+            direction1 != "Riobamba") {
+          return direction1;
+        }
+        if (!_isNumber(direction2) &&
+            direction2.length > 3 &&
+            !_tieneSignoMasEnMedio(direction2) &&
+            direction2 != "Riobamba") {
+          return direction2;
+        }
+      }
+      return "N/A";
+    } catch (error) {
+      logger.i("Error al obtener la dirección : ${error.toString()}");
+      return null;
+    }
+  }
+
+//Functions for validations
+  String _removeFirstTwoLetters(String str) {
+    int lettersRemoved = 0;
+    StringBuffer result = StringBuffer();
+    for (int i = 0; i < str.length; i++) {
+      if (lettersRemoved < 2 && RegExp(r'[a-zA-Z]').hasMatch(str[i])) {
+        lettersRemoved++;
+      } else {
+        result.write(str[i]);
+      }
+    }
+    return result.toString();
+  }
+
+  bool _isNumber(String str) {
+    String str1 = _removeFirstTwoLetters(str);
+    final number = double.tryParse(str1);
+    return number != null;
+  }
+
+  bool _tieneSignoMasEnMedio(String str) {
+    // Expresión regular para verificar si hay un signo + en medio
+    RegExp regExp = RegExp(r'^[^+].*\+.*[^+]$');
+    return regExp.hasMatch(str);
   }
 
 //GEt current location

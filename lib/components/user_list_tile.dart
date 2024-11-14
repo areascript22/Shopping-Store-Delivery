@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_maps_taxi_driver/controllers/map_page_controller.dart';
 import 'package:google_maps_taxi_driver/models/user.dart';
 import 'package:google_maps_taxi_driver/models/request.dart';
 import 'package:google_maps_taxi_driver/providers/map_provider.dart';
 import 'package:ionicons/ionicons.dart';
 
-class UserListTile extends StatelessWidget {
+class UserListTile extends StatefulWidget {
   final MapDataProvider mapDataProvider;
   final Request request;
   final User user;
@@ -22,29 +23,59 @@ class UserListTile extends StatelessWidget {
   });
 
   @override
+  State<UserListTile> createState() => _UserListTileState();
+}
+
+class _UserListTileState extends State<UserListTile> {
+  String? pickUpLocation;
+  String? dropOffLocation;
+  final MapPageController mapPageController =
+      MapPageController(showRatingStart: () {});
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    pickUpLocation = 'asdfsadfsadfsadf';
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      //Request permissions: Location
+      pickUpLocation = await mapPageController
+          .convertCoordsIntoLocation(widget.request.pickUpCoordinates);
+      dropOffLocation = await mapPageController
+          .convertCoordsIntoLocation(widget.request.destinationCoordinates);
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () async {
-        mapDataProvider.markers.clear();
-        if (mapDataProvider.fromCurrentToPickUp != null) {
-          mapDataProvider.fromCurrentToPickUp!.points.clear();
+        widget.mapDataProvider.markers.clear();
+        if (widget.mapDataProvider.fromCurrentToPickUp != null) {
+          widget.mapDataProvider.fromCurrentToPickUp!.points.clear();
         }
-        if (mapDataProvider.fromPickUpToDropOff != null) {
-          mapDataProvider.fromPickUpToDropOff!.points.clear();
+        if (widget.mapDataProvider.fromPickUpToDropOff != null) {
+          widget.mapDataProvider.fromPickUpToDropOff!.points.clear();
         }
-        mapDataProvider.addMarker(
-            request.pickUpCoordinates, "pick-up", BitmapDescriptor.hueGreen);
-        mapDataProvider.addMarker(request.destinationCoordinates, "drop-off",
-            BitmapDescriptor.hueAzure);
+        widget.mapDataProvider.addMarker(widget.request.pickUpCoordinates,
+            "pick-up", BitmapDescriptor.hueGreen);
+        widget.mapDataProvider.addMarker(widget.request.destinationCoordinates,
+            "drop-off", BitmapDescriptor.hueAzure);
         //Show marker's info window
 
-        mapDataProvider.request = request;
-        mapDataProvider.user = user;
-        mapDataProvider.pageIndex = 1;
-        mapDataProvider.customInfoWindowControllerPickUp.hideInfoWindow!();
-        mapDataProvider.customInfoWindowControllerDropOff.hideInfoWindow!();
+        widget.mapDataProvider.request = widget.request;
+        widget.mapDataProvider.user = widget.user;
+        widget.mapDataProvider.pageIndex = 1;
+        widget
+            .mapDataProvider.customInfoWindowControllerPickUp.hideInfoWindow!();
+        widget.mapDataProvider.customInfoWindowControllerDropOff
+            .hideInfoWindow!();
 
-        onTap();
+        widget.onTap();
       },
       child: Container(
         padding: const EdgeInsets.all(8.0),
@@ -61,12 +92,12 @@ class UserListTile extends StatelessWidget {
                   radius: 30,
                   backgroundColor: Colors.grey[300],
                   child: ClipOval(
-                    child: user.profileImage.isEmpty
+                    child: widget.user.profileImage.isEmpty
                         ? const Icon(Icons.person,
                             color: Colors.white, size: 24.0)
                         : FadeInImage.assetNetwork(
                             placeholder: 'assets/img/default_profile.png',
-                            image: user.profileImage,
+                            image: widget.user.profileImage,
                             fadeInDuration: const Duration(milliseconds: 50),
                             width: 100,
                             height: 100,
@@ -74,7 +105,7 @@ class UserListTile extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  user.name,
+                  widget.user.name,
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 Row(
@@ -84,9 +115,10 @@ class UserListTile extends StatelessWidget {
                       color: Colors.amber,
                       size: 20,
                     ),
-                    if (user.totalTrips >= 2)
-                      Text("${user.rating.toString()}(${user.totalTrips})"),
-                    if (user.totalTrips < 2) const Text("Nuevo"),
+                    if (widget.user.totalTrips >= 2)
+                      Text(
+                          "${widget.user.rating.toString()}(${widget.user.totalTrips})"),
+                    if (widget.user.totalTrips < 2) const Text("Nuevo"),
                   ],
                 ),
               ],
@@ -96,14 +128,14 @@ class UserListTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Text(
-                  //   request.pickUpLocation,
-                  //   style: const TextStyle(fontWeight: FontWeight.bold),
-                  // ),
-                  // Text(
-                  //   request.destinationLocation,
-                  //   style: TextStyle(color: Colors.grey[600]),
-                  // ),
+                  Text(
+                    pickUpLocation != null ? pickUpLocation! : "",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    dropOffLocation != null ? dropOffLocation! : '',
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
                   const SizedBox(height: 4.0),
                   // Row(
                   //   children: [
