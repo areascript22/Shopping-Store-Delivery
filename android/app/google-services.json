@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "495555920326",
+    "firebase_url": "https://fake-store-858b8-default-rtdb.firebaseio.com",
+    "project_id": "fake-store-858b8",
+    "storage_bucket": "fake-store-858b8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:495555920326:android:25cac67062a724376f72c7",
+        "android_client_info": {
+          "package_name": "com.example.google_maps_taxi_driver"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3rqZY56ZrRTD0ED7Jz6nJq6euALGIAko"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
